@@ -10,10 +10,9 @@ namespace EmployeeCatalog.Shared.Providers
 {
     public interface ISQSProvider
     {
-        Task SendMessagesAsync(string topicName, EmployeeRequest request, CancellationToken cancellationToken);
-        Task SendMessageAsync(string topicName, string messageText, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null, CancellationToken cancellationToken = default);
-        Task<Message> ReceiveMessageAsync(string topicName, TimeSpan? visibilityTimeout, CancellationToken cancellationToken);
-        Task DeleteMessageAsync(string topicName, Message message, CancellationToken cancellationToken);
+        Task SendMessageAsync(string QueueName, EmployeeRequest request, CancellationToken cancellationToken);
+        Task<Message> ReceiveMessageAsync(string QueueName, TimeSpan? visibilityTimeout, CancellationToken cancellationToken);
+        Task DeleteMessageAsync(string QueueName, Message message, CancellationToken cancellationToken);
         Task Initialize();
     }
 }

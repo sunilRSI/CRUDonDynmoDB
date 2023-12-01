@@ -37,6 +37,7 @@ namespace CRUDonDynmoDB.Controllers
         }
 
         [HttpGet]
+        [Route("GetAllEmployees")]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetAllEmployees(CancellationToken cancellationToken = default)
@@ -54,14 +55,19 @@ namespace CRUDonDynmoDB.Controllers
         }
 
         [HttpPost]
+        [Route("AddEmployee")]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AddEmployee([FromBody] EmployeeRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    throw new InvalidDataException();
+                }
                 var employee = await _employeeRepository.CreateEmployee(request, cancellationToken);
-                await _sQSProvider.SendMessagesAsync(EmployeeSQSQueueTopic.EmpCreated, request, cancellationToken);
+                await _sQSProvider.SendMessageAsync(EmployeeSQSQueueName.EmpCreated, request, cancellationToken);
                 return Created("", employee);
             }
             catch (Exception ex)
@@ -72,6 +78,7 @@ namespace CRUDonDynmoDB.Controllers
         }
 
         [HttpPut]
+        [Route("UpdateEmployee")]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateEmployee([FromBody] Employee request, CancellationToken cancellationToken = default)
@@ -97,6 +104,24 @@ namespace CRUDonDynmoDB.Controllers
             {
                 await _employeeRepository.DeleteEmployee(employeeId, cancellationToken);
                 return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+            return BadRequest();
+        }
+
+        [HttpPost()]
+        [Route("SearchEmployee")]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> FindEmployee([FromBody] EmployeeRequest request, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var employees = await _employeeRepository.FindEmployee(request, cancellationToken);
+                return Ok(employees);
             }
             catch (Exception ex)
             {

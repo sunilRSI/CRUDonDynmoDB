@@ -34,6 +34,7 @@ namespace EmployeeCatalog.Shared.Services
         }
         public async Task<IEnumerable<Employee>> GetAllEmployee(CancellationToken cancellationToken)
         {
+            //var ss = await All();
             return await _dynamoDBContext.ScanAsync<Employee>(default).GetRemainingAsync(cancellationToken);
         }
 
@@ -51,14 +52,14 @@ namespace EmployeeCatalog.Shared.Services
         {
             await _dynamoDBContext.SaveAsync(Request, cancellationToken);
         }
-        private async Task<IEnumerable<Employee>> Find(Employee employee, CancellationToken cancellationToken)
+        public async Task<IEnumerable<Employee>> FindEmployee(EmployeeRequest Request, CancellationToken cancellationToken)
         {
             var scanConditions = new List<ScanCondition>();
-            if (!string.IsNullOrEmpty(employee.Id.ToString()))
-                scanConditions.Add(new ScanCondition("Id", ScanOperator.Equal, employee.Id));
-            if (!string.IsNullOrEmpty(employee.Name))
-                scanConditions.Add(new ScanCondition("Name", ScanOperator.Equal, employee.Name));
-
+            if (!string.IsNullOrEmpty(Request.Name.ToString()))
+                scanConditions.Add(new ScanCondition("Name", ScanOperator.Equal, Request.Name));
+            if (!string.IsNullOrEmpty(Request.Designation))
+                scanConditions.Add(new ScanCondition("Designation", ScanOperator.Equal, Request.Designation));
+            
             return await _dynamoDBContext.ScanAsync<Employee>(scanConditions, null).GetRemainingAsync();
         }
         private async Task<IEnumerable<Employee>> All(string paginationToken = "")
@@ -91,6 +92,6 @@ namespace EmployeeCatalog.Shared.Services
             //var searchResults = _context.ScanAsync<Employee>(scanConditions, null);
             //return await searchResults.GetNextSetAsync();
 
-        }
+        } 
     }
 }

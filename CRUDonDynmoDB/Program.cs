@@ -1,6 +1,8 @@
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.S3.Model;
+using Amazon.SQS;
+using CRUDonDynmoDB.Middleware;
 using EmployeeCatalog.Shared.Data;
 using EmployeeCatalog.Shared.Providers;
 using EmployeeCatalog.Shared.Services;
@@ -23,13 +25,18 @@ namespace CRUDonDynmoDB
             builder.Services.AddSwaggerGen();
             var awsOptions = builder.Configuration.GetAWSOptions();
             builder.Services.AddDefaultAWSOptions(awsOptions);
-
+            builder.Services.AddAWSService<IAmazonSQS>(); 
             builder.Services.AddAWSService<IAmazonDynamoDB>();
+
             builder.Services.AddScoped<IDynamoDBContext, DynamoDBContext>();
             builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             builder.Services.AddScoped<IDbContext, DbContext>();
             builder.Services.AddScoped<ISQSProvider, SQSProvider>();
-            builder.Services.Configure<SQSQueueConfiguration>(builder.Configuration.GetSection("SQS"));
+
+            //builder.Services.Configure<SQSQueueConfiguration>(builder.Configuration.GetSection("SQS"));
+
+            builder.Services.AddTransient<ExHandlerMiddleware>();
+
             var app = builder.Build();
             using (var scope = app.Services.CreateScope())
             {
@@ -49,6 +56,7 @@ namespace CRUDonDynmoDB
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
+            app.UseMiddleware<ExHandlerMiddleware>();
 
             app.MapControllers();
 

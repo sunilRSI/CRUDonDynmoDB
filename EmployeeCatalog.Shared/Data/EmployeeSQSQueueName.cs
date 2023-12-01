@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace EmployeeCatalog.Shared.Data
 {
-    public class EmployeeSQSQueueTopic
+    public class EmployeeSQSQueueName
     { 
 
         public const string EmpCreated = "mysqscreate"; 
 
         public const string EmpDeleted = "MySQSQuqueDelete";
 
-        public static readonly string[] AllTopics = { EmpCreated, EmpDeleted };
+        public static readonly string[] AllSQSQueueNames = { EmpCreated, EmpDeleted };
     }
 }

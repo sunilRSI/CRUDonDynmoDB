@@ -1,8 +1,10 @@
 ﻿using Amazon;
+using Amazon.Runtime.Internal.Util;
 using Amazon.S3;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using EmployeeCatalog.Shared.Data;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -16,79 +18,68 @@ namespace EmployeeCatalog.Shared.Providers
 {
     public class SQSProvider : ISQSProvider
     {
-        private readonly IOptions<SQSQueueConfiguration> _options; 
-        public SQSProvider(IOptions<SQSQueueConfiguration> options)
-        { 
-            _options = options;
-        }
-        public async Task<bool> IsQueueExistAsync(AmazonSQSClient sQSClient, string QueueName, CancellationToken cancellationToken = default)
-        {
-            try
-            {
+        private readonly IAmazonSQS _sqsClient;
+        private readonly ILogger<SQSProvider> _logger;
 
-                GetQueueUrlResponse getQueueUrlResponse = await sQSClient.GetQueueUrlAsync(QueueName, cancellationToken);
-            }
-            catch (QueueDoesNotExistException)
-            {
-                return false;
-            }
-            return true;
+        public SQSProvider(IAmazonSQS sqsClient, ILogger<SQSProvider> logger)
+        {
+            _sqsClient = sqsClient;
+            _logger = logger;
         }
+      
         /// <summary>
         /// Initialize: This method will get called in program.cs
         /// </summary>
         /// <returns></returns>
         public async Task Initialize()
         {
-            var sQSClient = FetchAmazonSQSClient();
-            foreach (var topicName in EmployeeSQSQueueTopic.AllTopics)
+            foreach (var QueueName in EmployeeSQSQueueName.AllSQSQueueNames)
             {
-                bool isQueueExistAsync = await IsQueueExistAsync(sQSClient, topicName);
+                bool isQueueExistAsync = await IsQueueExistAsync(QueueName);
                 if (!isQueueExistAsync)
                 {
                     CreateQueueRequest createQueueRequest = new CreateQueueRequest
                     {
-                        QueueName = topicName,
+                        QueueName = QueueName,
 
                     };
-                    CreateQueueResponse createQueueResponse = await sQSClient.CreateQueueAsync(createQueueRequest); 
-                } 
-            }  
-        }
-
-        public Task DeleteMessageAsync(string topicName, Message message, CancellationToken cancellationToken)
+                    CreateQueueResponse createQueueResponse = await _sqsClient.CreateQueueAsync(createQueueRequest);
+                }
+            }
+        } 
+        public Task DeleteMessageAsync(string QueueName, Message message, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Message> ReceiveMessageAsync(string topicName, TimeSpan? visibilityTimeout, CancellationToken cancellationToken)
+        public Task<Message> ReceiveMessageAsync(string QueueName, TimeSpan? visibilityTimeout, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
-        }
-
-        public Task SendMessageAsync(string topicName, string messageText, TimeSpan? visibilityTimeout = null, TimeSpan? timeToLive = null, CancellationToken cancellationToken = default)
+        } 
+        public async Task SendMessageAsync(string QueueName, EmployeeRequest request, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
-        }
-
-        public async Task SendMessagesAsync(string topicName, EmployeeRequest request, CancellationToken cancellationToken)
-        {
-            AmazonSQSClient sqsclient = FetchAmazonSQSClient();// FetchSQSClient(topicName).Client;
-            GetQueueUrlResponse getQueueUrlResponse = await sqsclient.GetQueueUrlAsync(topicName, cancellationToken);
+            GetQueueUrlResponse getQueueUrlResponse = await _sqsClient.GetQueueUrlAsync(QueueName, cancellationToken);
             SendMessageRequest sendMessageRequest = new SendMessageRequest
             {
                 QueueUrl = getQueueUrlResponse.QueueUrl,
                 MessageBody = JsonSerializer.Serialize(request),
             };
-            SendMessageResponse messageResponse = await sqsclient.SendMessageAsync(sendMessageRequest, cancellationToken);
-        } 
-        private AmazonSQSClient FetchAmazonSQSClient()
+            SendMessageResponse messageResponse = await _sqsClient.SendMessageAsync(sendMessageRequest, cancellationToken);
+        }
+        private async Task<bool> IsQueueExistAsync(string QueueName, CancellationToken cancellationToken = default)
         {
-            SQSQueueConfiguration sQSQueueConfiguration = _options.Value;
-            RegionEndpoint regionEndpoint = RegionEndpoint.GetBySystemName(sQSQueueConfiguration.AwsRegion);
-           return new AmazonSQSClient(sQSQueueConfiguration.AwsAccessKey, sQSQueueConfiguration.AwsSecretKey, regionEndpoint);
+            try
+            {
+                GetQueueUrlResponse getQueueUrlResponse = await _sqsClient.GetQueueUrlAsync(QueueName, cancellationToken);
+            }
+            catch (QueueDoesNotExistException)
+            {
+                _logger.LogInformation($"QueueName {QueueName} not exist");
+                return false;
+            }
+            return true;
+        }
 
-        } 
     }
-     
+
 }

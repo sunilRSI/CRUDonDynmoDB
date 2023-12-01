@@ -14,5 +14,6 @@ namespace EmployeeCatalog.Shared.Services
         public Task<Employee> CreateEmployee(EmployeeRequest employee, CancellationToken cancellationToken);
         public Task UpdateEmployee(Employee employee, CancellationToken cancellationToken);
         public Task DeleteEmployee(Guid id, CancellationToken cancellationToken);
+        public Task<IEnumerable<Employee>> FindEmployee(EmployeeRequest employee, CancellationToken cancellationToken);
     }
 }
