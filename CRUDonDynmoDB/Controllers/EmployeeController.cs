@@ -1,12 +1,14 @@
 ﻿using EmployeeCatalog.Shared.Data;
 using EmployeeCatalog.Shared.Providers;
 using EmployeeCatalog.Shared.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CRUDonDynmoDB.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class EmployeeController : ControllerBase
     {
         private readonly ILogger<EmployeeController> _logger;

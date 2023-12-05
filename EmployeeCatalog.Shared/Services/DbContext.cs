@@ -1,7 +1,10 @@
 ﻿using Amazon.DynamoDBv2.Model;
 using Amazon.DynamoDBv2;
-using EmployeeCatalog.Shared.Data; 
+using EmployeeCatalog.Shared.Data;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Amazon.Runtime.Internal;
+using Microsoft.Extensions.Configuration;
 
 namespace EmployeeCatalog.Shared.Services
 {
@@ -9,15 +12,19 @@ namespace EmployeeCatalog.Shared.Services
     {
         private readonly ILogger<DbContext> _logger;
         private readonly IAmazonDynamoDB _client;
+        private readonly IConfiguration _configuration;
+        private readonly string _tableName=string.Empty;
 
-        public DbContext(ILogger<DbContext> logger, IAmazonDynamoDB amazonDynamoDBClient)
+        public DbContext(ILogger<DbContext> logger, IAmazonDynamoDB amazonDynamoDBClient, IConfiguration configuration)
         {
             _logger = logger;
             _client = amazonDynamoDBClient;
+            _configuration = configuration;
+            _tableName = _configuration["dynamoDBTableName"];
         }
-        public async Task Initilize(string TableName)
+        public async Task Initilize()
         {
-            await CreateTable(TableName);
+            await CreateTable(_tableName);
 
         }
         public async Task CreateTable(string TableName)

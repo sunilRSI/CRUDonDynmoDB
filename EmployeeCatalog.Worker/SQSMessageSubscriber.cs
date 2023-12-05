@@ -25,9 +25,10 @@ namespace EmployeeCatalog.Worker
             }
             return Task.CompletedTask;
         } 
-        public async Task StopAsync(CancellationToken cancellationToken)
+        public Task StopAsync(CancellationToken cancellationToken)
         {
             _cancellationTokenSource.Cancel();
+            return Task.CompletedTask;
         }
     }
 }

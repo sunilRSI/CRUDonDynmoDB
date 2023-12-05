@@ -8,6 +8,6 @@ namespace EmployeeCatalog.Shared.Services
 {
     public interface IDbContext
     {
-        public Task Initilize(string TableName);
+        public Task Initilize();
     }
 }

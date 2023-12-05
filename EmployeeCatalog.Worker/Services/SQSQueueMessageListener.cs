@@ -80,7 +80,7 @@ namespace EmployeeCatalog.Worker.Services
                     };
                     SendMessageResponse messageResponse = await _sqsClient.SendMessageAsync(sendMessageRequest);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
 
                 }
