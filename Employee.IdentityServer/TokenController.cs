@@ -1,8 +1,10 @@
 ﻿using IdentityModel;
 using IdentityModel.Client;
+using IdentityServer4.Test;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using System.ComponentModel.DataAnnotations;
 using System.Threading;
 
 namespace Employee.IdentityServer
@@ -18,8 +20,13 @@ namespace Employee.IdentityServer
             _configuration = configuration;
         }
         [HttpGet]
-        public async Task<IActionResult> GetToken(CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetToken([Required] string UserId, [Required] string Password, CancellationToken cancellationToken = default)
         {
+            TestUser testUser = IdentityConfiguration.TestUsers.FirstOrDefault(x => x.Username == UserId && x.Password == Password);
+            if (testUser == null)
+            {
+                return BadRequest("Invalid Username and password");
+            }
             using (var client = new HttpClient())
             {
                 var tokenResponse = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
@@ -35,6 +42,7 @@ namespace Employee.IdentityServer
                 }
                 return Ok(tokenResponse);
             }
+
 
         }
     }
